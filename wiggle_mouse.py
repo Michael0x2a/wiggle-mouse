@@ -20,9 +20,10 @@ DEFAULT_CONFIG_FILE = '''# Wiggle mouse config
 # If you make any changes to this config file, restart the program.
 
 # All times are in seconds
-time_between_mouse_movement = 300.0  # 5 minutes
+time_between_mouse_movement = 5.0
 time_mouse_spends_moving = 1.0
-time_between_user_movement_check = 59.0  # Checks about once a minute to see if the mouse has moved.
+time_between_user_movement_check = 0.5  # Checks every half-second to see if 
+                                        # the mouse has moved.
 
 # All distances are in pixels
 distance_mouse_moves = 40
