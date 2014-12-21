@@ -50,12 +50,16 @@ def parse_config_file(filename):
     '''Parses the config file, return a dictionary mapping keys to values.'''
     output = {}
     with open(filename) as stream:
-        for line in stream:
-            line, _, _ = line.partition('#')
+        for raw_line in stream:
+            line, _, _ = raw_line.partition('#')
             line = line.strip()
             if len(line) == 0:
                 continue
             key, _, value = line.partition('=')
+            if key.strip() == '' or value.strip() == '':
+                raise ParseException(
+                    'The line `{0}` is malformed.\n'.format(raw_line) +
+                    'It should take the form `KEY = VALUE`')
             output[key.strip()] = value.strip()
     return output
 
@@ -68,10 +72,12 @@ def attempt_conversion(raw_config_data, key, func):
         return func(raw_config_data[key])
     except KeyError as ex:
         raise ParseException(
-            'Unable to find `{0}`'.format(key))
+            'Unable to find `{0}`.\n'.format(key) + 
+            'Consider deleting the config file -- a new one with correct\n' +
+            'default values will be auto-generated.')
     except ValueError as ex:
         raise ParseException(
-            'Unable to parse value for `{0}`'.format(key))
+            '`{0}` is not a valid number.'.format(raw_config_data[key]))
     except Exception as ex:
         raise ParseException(
             'Encountered unknown error with `{0}`'.format(key))
@@ -80,18 +86,20 @@ def attempt_conversion(raw_config_data, key, func):
 def get_config(raw_config_data):
     '''Takes in the raw config data and returns a sanitized version. Will
     raise a ParseException upon error.'''
-    attempt = lambda key, func: attempt_conversion(raw_config_data, key, func)
-
+    def attempt(key, func):
+        output = attempt_conversion(raw_config_data, key, func)
+        if output <= 0:
+            raise ParseException('Value for `{0}` must be greater than zero.')
+        
     time_between_swipes = attempt('time_between_mouse_movement', float)
     movement_recheck_delay = attempt('time_between_user_movement_check', float)
     swipe_pixel_distance = attempt('distance_mouse_moves', int)
     swipe_time = attempt('time_mouse_spends_moving', float)
 
     if time_between_swipes <= movement_recheck_delay:
-        raise ParseException('Value for `{0}` must be less then `{1}`'.format(
-            'time_between_user_movement_check',
-            'time_between_mouse_movement'))
-
+        raise ParseException('Value for `{0}`\n must be less then `{1}`.'.format(
+            'time_between_mouse_movement',
+            'time_between_user_movement_check'))
     return {
         'swipe_time_delay': swipe_time / swipe_pixel_distance,
         'swipe_pixel_distance': swipe_pixel_distance,
@@ -149,7 +157,7 @@ def main():
         print('')
 
         while True:
-            print('Starting swipe')
+            print('Starting swipe.')
             swipe_mouse(
                 config['swipe_pixel_distance'],
                 config['swipe_time_delay'])
