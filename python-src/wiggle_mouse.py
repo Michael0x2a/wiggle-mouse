@@ -90,6 +90,7 @@ def get_config(raw_config_data):
         output = attempt_conversion(raw_config_data, key, func)
         if output <= 0:
             raise ParseException('Value for `{0}` must be greater than zero.')
+        return output;
         
     time_between_swipes = attempt('time_between_mouse_movement', float)
     movement_recheck_delay = attempt('time_between_user_movement_check', float)
